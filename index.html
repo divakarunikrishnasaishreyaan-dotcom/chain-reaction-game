@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Chrono‑Chain Challenge — Design Championship</title>
+<title>Chrono-Chain Challenge — Design Championship</title>
 <style>
   :root{
     --bg:#0b0f1a;--panel:#0f1626;--accent:#00f2ff;--accent2:#6df7c1;--danger:#ff3b3b;--ok:#86ff6a;--text:#e6f1ff;
@@ -33,8 +33,8 @@
 <body>
   <div id="topbar">
     <div>
-      <div id="title">Chrono‑Chain Challenge</div>
-      <div id="subtitle">Chain‑Reaction Puzzle • Single‑File HTML • No Libraries</div>
+      <div id="title">Chrono-Chain Challenge</div>
+      <div id="subtitle">Chain-Reaction Puzzle • Single-File HTML • No Libraries</div>
     </div>
     <div style="flex:1"></div>
     <div id="status">Ready</div>
@@ -55,7 +55,7 @@
         <div class="row">
           <div class="chip">Click on grid to place or select nodes</div>
           <div class="chip">Drag to move nodes</div>
-          <div class="chip">Right‑click: delete</div>
+          <div class="chip">Right-click: delete</div>
         </div>
         <h3>Palette</h3>
         <div id="palette" class="row"></div>
@@ -88,14 +88,13 @@
   const lerp=(a,b,t)=>a+(b-a)*t;
   const now=()=>performance.now();
   const rnd=(a,b)=>Math.random()*(b-a)+a;
-  function snap(v){return Math.round(v/GRID)*GRID}
   function gridToWorld(gx,gy){return {x:gx*GRID+GRID/2,y:gy*GRID+GRID/2}}
   function worldToGrid(x,y){return {gx:Math.floor(x/GRID),gy:Math.floor(y/GRID)}}
 
   // --- Audio (tiny synth beeps) ---
   const Audio={
     ctx:null,
-    init(){ if(this.ctx) return; this.ctx=new (window.AudioContext||window.webkitAudioContext)(); },
+    init(){ if(this.ctx) return; try{ this.ctx=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ this.ctx=null; } },
     beep(freq=440,dur=0.12,vol=0.08){ if(!this.ctx) return; const t=this.ctx.currentTime; const o=this.ctx.createOscillator(); const g=this.ctx.createGain(); o.type='sine'; o.frequency.setValueAtTime(freq,t); g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(0.0001,t+dur); o.connect(g).connect(this.ctx.destination); o.start(t); o.stop(t+dur); }
   };
 
@@ -123,8 +122,6 @@
   const PALETTE=['START','FIRE','ICE','WATER','WIND','PLANT','POWER','GATE','DELAY','SPLIT','AND','OR','GOAL'];
 
   // --- Rule Engine (what triggers what) ---
-  // A node receives an event {kind:"heat"|"cool"|"wet"|"push"|"power"|"signal"}
-  // and can emit new events with delay.
   function nodeReact(node,ev,emit){
     switch(node.type){
       case 'START':
@@ -189,19 +186,15 @@
 
   // --- Level Data ---
   const LEVELS=[
-    // Tutorial
     { name:'Forest Ruins', time:35, layout:[
       {t:'START',x:2,y:4},{t:'FIRE',x:4,y:4},{t:'ICE',x:6,y:4},{t:'WATER',x:8,y:4},{t:'PLANT',x:10,y:4},{t:'GOAL',x:13,y:4}
     ]},
-    // Parallel & delays
     { name:'Windworks', time:40, layout:[
       {t:'START',x:1,y:7},{t:'WIND',x:3,y:7},{t:'FIRE',x:5,y:6},{t:'ICE',x:7,y:6},{t:'DELAY',x:7,y:8},{t:'WATER',x:9,y:7},{t:'PLANT',x:11,y:7},{t:'GOAL',x:14,y:7}
     ]},
-    // Logic
     { name:'Logic Lab', time:45, layout:[
       {t:'START',x:2,y:2},{t:'FIRE',x:5,y:2},{t:'WATER',x:5,y:6},{t:'AND',x:7,y:4},{t:'POWER',x:9,y:4},{t:'GATE',x:11,y:4},{t:'GOAL',x:13,y:4}
     ]},
-    // Big puzzle
     { name:'Time Rift', time:55, layout:[
       {t:'START',x:1,y:4},{t:'SPLIT',x:3,y:4},
       {t:'FIRE',x:5,y:2},{t:'ICE',x:7,y:2},{t:'WATER',x:9,y:2},{t:'PLANT',x:11,y:2},
@@ -212,7 +205,13 @@
 
   // --- Node & Graph ---
   class Node{
-    constructor(type,gx,gy){ this.type=type; this.gx=gx; this.gy=gy; const p=gridToWorld(gx,gy); this.x=p.x; this.y=p.y; this.delay=0.6; this.links=new Set(); this.id=crypto.randomUUID?.():Math.random().toString(36).slice(2); }
+    constructor(type,gx,gy){
+      this.type=type; this.gx=gx; this.gy=gy;
+      const p=gridToWorld(gx,gy); this.x=p.x; this.y=p.y;
+      this.delay=0.6; this.links=new Set();
+      // safer id: use crypto.randomUUID if available, else fallback
+      this.id = (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') ? crypto.randomUUID() : Math.random().toString(36).slice(2);
+    }
   }
   class Graph{
     constructor(){ this.nodes=[]; this.nodeMap=new Map(); }
@@ -227,13 +226,12 @@
   class Simulator{
     constructor(graph){ this.g=graph; this.events=[]; this.time=0; this.running=false; this.chain=0; this.goalReached=false; }
     schedule(node,kind,delay){ this.events.push({t:this.time+delay,node,kind}); }
-    start(){ this.events.length=0; this.time=0; this.running=true; this.chain=0; this.goalReached=false; // seed from START
+    start(){ this.events.length=0; this.time=0; this.running=true; this.chain=0; this.goalReached=false;
       for(const n of this.g.nodes) if(n.type==='START') this.schedule(n,'start',0);
     }
     step(dt){ if(!this.running) return; this.time+=dt; let progressed=false; for(let i=0;i<this.events.length;i++){
         const e=this.events[i]; if(e.t<=this.time){
-          progressed=true; this.events.splice(i,1); i--; // consume
-          // propagate to outgoing links
+          progressed=true; this.events.splice(i,1); i--;
           for(const id of e.node.links){ const target=this.g.nodeMap.get(id); if(!target) continue; this.chain++; nodeReact(target,{kind:e.kind},(emitter,kind,delay)=>{
             this.schedule(target,kind,delay);
           }); if(target.type==='GOAL' && (e.kind==='signal'||e.kind==='power')){ this.goalReached=true; }
@@ -248,8 +246,7 @@
   const State={ graph:new Graph(), selectedType:'START', selectedNode:null, dragging:false, linkFrom:null, timeLeft:30, sim:null, running:false, levelIndex:0 };
 
   function loadLevel(i){
-    const L=LEVELS[i]; State.levelIndex=i; State.graph=new Graph(); L.layout.forEach(d=>State.graph.add(d.t,d.x,d.y)); // auto-link near neighbors (rightward)
-    // simple heuristic: link to next node horizontally to the right if within same row band
+    const L=LEVELS[i]; State.levelIndex=i; State.graph=new Graph(); L.layout.forEach(d=>State.graph.add(d.t,d.x,d.y));
     const rowMap={};
     State.graph.nodes.forEach(n=>{ rowMap[n.gy]=rowMap[n.gy]||[]; rowMap[n.gy].push(n); });
     Object.values(rowMap).forEach(arr=>{ arr.sort((a,b)=>a.gx-b.gx); for(let k=0;k<arr.length-1;k++){ State.graph.link(arr[k],arr[k+1]); } });
@@ -269,13 +266,9 @@
   // --- Input ---
   let mouse={x:0,y:0,down:false,rx:0,ry:0};
   canvas.addEventListener('mousemove',e=>{ const r=canvas.getBoundingClientRect(); mouse.x=(e.clientX-r.left)*canvas.width/r.width; mouse.y=(e.clientY-r.top)*canvas.height/r.height; });
-  canvas.addEventListener('mousedown',e=>{ Audio.init(); mouse.down=true; if(e.button===2){ // delete
-      const n=pickNode(mouse.x,mouse.y); if(n){ State.graph.remove(n); setStatus('Deleted node'); }
-      return;
-    }
+  canvas.addEventListener('mousedown',e=>{ Audio.init(); mouse.down=true; if(e.button===2){ const n=pickNode(mouse.x,mouse.y); if(n){ State.graph.remove(n); setStatus('Deleted node'); } return; }
     const n=pickNode(mouse.x,mouse.y); if(n){ State.selectedNode=n; State.dragging=true; setStatus(`Selected ${n.type}`); if(e.shiftKey){ State.linkFrom=n; }
-    }else{ // place new
-      const {gx,gy}=worldToGrid(mouse.x,mouse.y); const type=State.selectedType; const m=State.graph.add(type,gx,gy); State.selectedNode=m; State.dragging=true; setStatus(`Placed ${type}`); }
+    }else{ const {gx,gy}=worldToGrid(mouse.x,mouse.y); const type=State.selectedType; const m=State.graph.add(type,gx,gy); State.selectedNode=m; State.dragging=true; setStatus(`Placed ${type}`); }
   });
   canvas.addEventListener('mouseup',e=>{ mouse.down=false; State.dragging=false; if(State.linkFrom){ const t=pickNode(mouse.x,mouse.y); if(t && t!==State.linkFrom){ State.graph.link(State.linkFrom,t); setStatus(`Linked ${State.linkFrom.type} → ${t.type}`); } State.linkFrom=null; }
   });
@@ -309,8 +302,7 @@
 
     // simulation
     if(State.running){ const progressed=State.sim.step(dt); const dur=LEVELS[State.levelIndex]?.time||40; timelineFill.style.width=clamp((State.sim.time/dur)*100,0,100)+"%"; if(progressed) Store.score+=1;
-      if(State.sim.goalReached){ // win level
-        Store.score+=250; Store.bestChain=Math.max(Store.bestChain,State.sim.chain); State.running=false; setStatus('Goal reached! Level complete.'); nextLevel(); persist(); }
+      if(State.sim.goalReached){ Store.score+=250; Store.bestChain=Math.max(Store.bestChain,State.sim.chain); State.running=false; setStatus('Goal reached! Level complete.'); nextLevel(); persist(); }
       if(State.sim.time> (LEVELS[State.levelIndex]?.time||40)){
         State.running=false; Store.lives--; setStatus('Time up!'); if(Store.lives<0){ gameOver(); } persist();
       }
@@ -331,4 +323,3 @@
 </script>
 </body>
 </html>
-
