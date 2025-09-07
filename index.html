@@ -3,323 +3,410 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Chrono-Chain Challenge — Design Championship</title>
+<title>Procedural Puzzle Lab — Chrono Logic</title>
 <style>
-  :root{
-    --bg:#0b0f1a;--panel:#0f1626;--accent:#00f2ff;--accent2:#6df7c1;--danger:#ff3b3b;--ok:#86ff6a;--text:#e6f1ff;
-  }
-  html,body{height:100%;margin:0;background:radial-gradient(1200px 600px at 50% -200px,#12203a,#0b0f1a);color:var(--text);font-family:Inter,system-ui,Segoe UI,Arial,sans-serif}
-  #topbar{position:fixed;inset:0 0 auto 0;height:56px;background:linear-gradient(180deg,#111a2e,#0f1626);display:flex;align-items:center;gap:14px;padding:0 16px;border-bottom:1px solid #22314f;z-index:10}
-  #title{font-weight:800;letter-spacing:.4px}
-  #subtitle{opacity:.8;font-size:12px}
-  #wrap{display:flex;gap:12px;padding:72px 12px 12px;}
-  #left{flex:1;display:flex;justify-content:center}
-  #right{width:360px;max-width:36vw;background:var(--panel);border:1px solid #22314f;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.45);padding:12px}
-  canvas{border:2px solid #22314f;border-radius:16px;box-shadow:0 10px 40px rgba(0,0,0,.45);background:#0a1020}
-  .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;border:1px solid #28406b;background:#111a2e;color:var(--text);cursor:pointer;user-select:none}
-  .btn:hover{border-color:#3a5a91;box-shadow:0 0 0 3px rgba(0,242,255,.08) inset}
-  .btn.primary{background:linear-gradient(180deg,#0e2b36,#0a1f2a);border-color:#2a6a78}
-  h3{margin:8px 8px 4px}
-  #panel{height:520px;overflow:auto;padding:6px 8px}
-  .row{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
-  .chip{padding:6px 10px;border:1px solid #2b3f63;border-radius:999px;background:#0d1527;font-size:12px}
-  .kbd{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;background:#0f1b33;border:1px solid #2c3757;border-radius:6px;padding:2px 6px}
-  .meter{height:8px;border-radius:999px;background:#15213c;overflow:hidden}
-  .meter>span{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));width:0%}
-  #status{font-size:12px;opacity:.85}
-  .tiny{font-size:11px;opacity:.75}
+  :root{--bg:#071422;--panel:#0b1a2a;--glass:rgba(255,255,255,0.04);--accent:#00f2ff;}
+  html,body{height:100%;margin:0;background:radial-gradient(1000px 600px at 10% 0%,#072033 0%, #04111a 50%, #020815 100%);font-family:Inter,Segoe UI,Arial,sans-serif;color:#eaf6ff}
+  .app{max-width:1200px;margin:18px auto;padding:18px;display:flex;gap:18px}
+  .left{flex:1;min-width:540px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:14px;padding:14px;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+  .right{width:360px;background:linear-gradient(180deg,#081726,#08121a);border-radius:12px;padding:12px;border:1px solid rgba(255,255,255,0.03)}
+  header{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+  h1{margin:0;font-weight:800;letter-spacing:.6px}
+  .sub{opacity:.75;font-size:13px}
+  canvas{display:block;width:100%;height:620px;border-radius:10px;background:transparent}
+  .panel{margin-top:10px;background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.03)}
+  .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);cursor:pointer;background:linear-gradient(180deg,#06202e,#041422);color:var(--accent)}
+  .btn.ghost{background:transparent;color:#cfeefb;border-color:rgba(255,255,255,0.02)}
+  .hud{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .stat{padding:8px;border-radius:8px;background:rgba(255,255,255,0.02);font-weight:600}
+  .tiny{font-size:12px;opacity:.78}
+  .titleSmall{font-size:13px;opacity:.9}
+  .palettePreview{height:34px;border-radius:8px;overflow:hidden;display:flex}
+  footer{margin-top:12px;text-align:center;color:rgba(255,255,255,0.45);font-size:13px}
+  /* menu overlay */
+  .overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg, rgba(2,8,14,0.6), rgba(2,8,14,0.9));z-index:200}
+  .menu{width:920px;max-width:96%;background:linear-gradient(180deg,#041728,#072434);padding:24px;border-radius:12px;border:1px solid rgba(255,255,255,0.04);box-shadow:0 40px 140px rgba(0,0,0,0.7)}
+  .menu h2{margin:6px 0 0 0}
+  .menu .cols{display:flex;gap:12px}
+  .menu .leftCol{flex:1}
+  .menu .rightCol{width:320px}
+  .bigBtn{padding:14px 20px;font-size:18px;border-radius:12px;background:linear-gradient(90deg,var(--accent),#6df7c1);border:none;color:#02131a;cursor:pointer;font-weight:700}
+  .small{font-size:13px;opacity:.88}
+  .muted{opacity:.7;font-size:13px}
+  .kbd{background:#021521;padding:6px 8px;border-radius:6px;border:1px solid rgba(255,255,255,0.03);font-family:ui-monospace,monospace}
+  .list{max-height:220px;overflow:auto;padding-right:6px}
+  .lvlItem{padding:8px;border-radius:8px;margin-bottom:8px;background:rgba(255,255,255,0.02);cursor:pointer}
+  .lvlItem:hover{background:rgba(255,255,255,0.03)}
+  .green{color:#7ef7c1}
 </style>
 </head>
 <body>
-  <div id="topbar">
-    <div>
-      <div id="title">Chrono-Chain Challenge</div>
-      <div id="subtitle">Chain-Reaction Puzzle • Single-File HTML • No Libraries</div>
+
+<!-- MENU / OVERLAYS -->
+<div id="menuOverlay" class="overlay">
+  <div class="menu" role="dialog" aria-modal="true">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div><h2>Chrono Logic — Procedural Puzzle Lab</h2><div class="muted">A dynamic puzzle experience — every playthrough unique</div></div>
+      <div class="tiny">by <b>Krishna Sai Shreyaan Divakaruni</b> • Middle Year — Game Design</div>
     </div>
-    <div style="flex:1"></div>
-    <div id="status">Ready</div>
+
+    <div style="margin-top:16px" class="cols">
+      <div class="leftCol">
+        <p class="small">Play modes: <b>Procedural Run</b> (endless levels that increase in difficulty) — perfect for judges who want to see design depth.</p>
+        <div style="display:flex;gap:8px;margin-top:12px">
+          <button class="bigBtn" id="btnStart">▶ Play Now</button>
+          <button class="btn ghost" id="btnHow">❓ How to Play</button>
+          <button class="btn ghost" id="btnCredits">⭐ Credits</button>
+        </div>
+
+        <h3 style="margin-top:16px">Quick Features</h3>
+        <div class="list">
+          <div class="lvlItem">• Procedural puzzle types (Color Sequence, Tile Pattern, Circuit Flow)</div>
+          <div class="lvlItem">• Dynamic neon palettes & particle FX</div>
+          <div class="lvlItem">• Timer, Moves, Score & local leaderboard</div>
+          <div class="lvlItem">• Random mid-level events (scramble, bonus, swap)</div>
+          <div class="lvlItem">• Save/Load & sound toggle</div>
+        </div>
+      </div>
+
+      <div class="rightCol">
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div class="stat">Mode: <b id="menuMode">Procedural</b></div>
+          <div class="stat">Session seed: <span id="menuSeed">—</span></div>
+          <div class="stat">Best local score: <span id="bestLocal">0</span></div>
+          <div style="margin-top:8px"><small class="muted">Controls: Click tiles, drag where allowed, use on-screen buttons. Audio requires a first click to enable.</small></div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;justify-content:flex-end;margin-top:16px;gap:8px">
+      <button class="btn ghost" id="btnDemo">🔁 Demo Run</button>
+      <button class="btn" id="btnStartNow">Start Procedural Run</button>
+    </div>
   </div>
-  <div id="wrap">
-    <div id="left">
-      <canvas id="game" width="1024" height="576"></canvas>
-    </div>
-    <div id="right">
-      <h3>Controls</h3>
-      <div id="panel">
-        <div class="row">
-          <div class="btn primary" id="btnPlay">▶ Play Sequence</div>
-          <div class="btn" id="btnReset">⟲ Reset</div>
-          <div class="btn" id="btnSandbox">🧪 Sandbox</div>
-          <div class="btn" id="btnStory">📖 Story</div>
-        </div>
-        <div class="row">
-          <div class="chip">Click on grid to place or select nodes</div>
-          <div class="chip">Drag to move nodes</div>
-          <div class="chip">Right-click: delete</div>
-        </div>
-        <h3>Palette</h3>
-        <div id="palette" class="row"></div>
-        <h3>Timeline</h3>
-        <div class="meter"><span id="timelineFill"></span></div>
-        <div class="tiny">Events visualize as the sequence runs. Parallel chains glow.</div>
-        <h3>Level</h3>
-        <div id="levelInfo" class="tiny">Level 1 • Score 0 • Lives 3 • Best Chain 0</div>
-        <h3>Tips</h3>
-        <ul class="tiny">
-          <li>Build a chain from a <b>Start</b> node to the <b>Goal</b>.</li>
-          <li>Use <b>Delay</b>, <b>Splitter</b>, and <b>Logic</b> nodes for complexity.</li>
-          <li>Wind moves Fire; Fire melts Ice; Water grows Plant; Power activates Gate.</li>
-          <li>Everything is simulated — experiment!</li>
+</div>
+
+<!-- HOW TO PLAY OVERLAY -->
+<div id="howOverlay" class="overlay" style="display:none">
+  <div class="menu">
+    <h2>How to Play — Quick Guide</h2>
+    <div style="display:flex;gap:12px">
+      <div style="flex:1">
+        <p class="small">You will face a sequence of generated puzzles. Each puzzle is one of three core types:</p>
+        <ol>
+          <li><b>Color-Sequence</b>: Memorize/replicate a color order by clicking tiles.</li>
+          <li><b>Tile-Pattern</b>: Toggle tiles to match the hidden pattern. Use logic to propagate flips.</li>
+          <li><b>Circuit-Flow</b>: Connect inputs to outputs using logic gates (AND/OR/NOT) or route flows. Place connectors by clicking nodes.</li>
+        </ol>
+        <p class="small">Tips for judges: speed and efficiency reward you with higher score. Random events can change the puzzle mid-run — adapt quickly!</p>
+      </div>
+      <div style="width:320px">
+        <h4>HUD & Controls</h4>
+        <ul class="small">
+          <li>Timer: how long this puzzle took</li>
+          <li>Moves: actions taken</li>
+          <li>Score: cumulative session score</li>
+          <li>Sound toggle available in the right panel</li>
         </ul>
+        <div style="margin-top:8px"><button class="bigBtn" id="btnHowClose">Got it — Play</button></div>
       </div>
     </div>
   </div>
+</div>
+
+<!-- CREDITS OVERLAY -->
+<div id="creditsOverlay" class="overlay" style="display:none">
+  <div class="menu">
+    <h2>Credits & Design Notes</h2>
+    <p class="small">Designed & implemented by <b>Krishna Sai Shreyaan Divakaruni</b> for Design Championship — Middle Year (Game Design).</p>
+    <p class="small">This entry showcases procedural generation, logic-based puzzles, visual polish, and adaptive challenge — designed to highlight game design & systems thinking.</p>
+    <div style="display:flex;justify-content:flex-end"><button class="btn" id="btnCreditsClose">Close</button></div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div class="app" id="appRoot" style="display:none">
+  <div class="left">
+    <header>
+      <div>
+        <h1>Chrono Logic</h1>
+        <div class="sub">Procedural puzzle lab — dynamic, colorful, logic-driven</div>
+      </div>
+      <div style="flex:1"></div>
+      <div class="sub">Seed: <span id="seedDisplay">—</span></div>
+    </header>
+
+    <div class="panel">
+      <canvas id="mainCanvas" width="1000" height="620"></canvas>
+      <div class="hud" style="margin-top:10px;display:flex;justify-content:space-between;align-items:center">
+        <div style="display:flex;gap:8px;align-items:center">
+          <div class="stat">Level <span id="levelIdx">1</span></div>
+          <div class="stat">Type <span id="levelType">—</span></div>
+          <div class="stat">Timer <span id="hudTimer">0.0s</span></div>
+          <div class="stat">Moves <span id="hudMoves">0</span></div>
+          <div class="stat">Score <span id="hudScore">0</span></div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <div class="palettePreview" id="palettePreview"></div>
+          <button class="btn" id="btnPause">Pause</button>
+          <button class="btn ghost" id="btnSave">Save</button>
+          <button class="btn ghost" id="btnLoad">Load</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="right">
+    <div class="panel">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <div class="titleSmall">Session</div>
+          <div class="muted tiny">Procedural Run</div>
+        </div>
+        <div style="text-align:right">
+          <div class="titleSmall green" id="bestScore">Best: 0</div>
+          <div class="muted tiny">Local Best</div>
+        </div>
+      </div>
+
+      <hr style="opacity:.04;margin:10px 0">
+
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div><button class="btn" id="btnMute">🔊 Sound: On</button></div>
+        <div><button class="btn ghost" id="btnSkip">⏭ Skip Puzzle (costs points)</button></div>
+        <div><button class="btn ghost" id="btnResetSession">♻️ Reset Session</button></div>
+      </div>
+    </div>
+
+    <div class="panel" style="margin-top:10px">
+      <div class="small muted">Live Stats</div>
+      <div style="display:flex;flex-direction:column;gap:6px;margin-top:8px">
+        <div class="tiny">Current puzzle difficulty: <b id="difficultyLabel">Easy</b></div>
+        <div class="tiny">Random events: <b id="eventsLabel">On</b></div>
+        <div class="tiny">Palette: <span id="paletteName">—</span></div>
+      </div>
+    </div>
+
+    <div class="panel" style="margin-top:10px">
+      <div class="small muted">Leaderboard (local)</div>
+      <div id="leaderboard" class="list" style="margin-top:8px;max-height:180px;overflow:auto">
+        <!-- filled dynamically -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer style="text-align:center;padding:12px;color:rgba(255,255,255,0.4);font-size:13px">Good luck at the Design Championship — build, test, win!</footer>
+
 <script>
-(function(){
-  const W=1024,H=576,GRID=64; // 16x9 grid
-  const canvas=document.getElementById('game');
-  const ctx=canvas.getContext('2d');
-  const statusEl=document.getElementById('status');
-  const levelInfo=document.getElementById('levelInfo');
-  const timelineFill=document.getElementById('timelineFill');
+/* ------------------------------
+   Procedural Puzzle Lab — Single file game
+   Features:
+    - Procedural puzzles: ColorSequence, TilePattern, CircuitFlow
+    - Dynamic palettes, particles, audio
+    - Timer, moves, score, local leaderboard
+    - Random mid-level events
+    - Save/Load + Pause + Skip
+---------------------------------*/
 
-  // --- Utility ---
-  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
-  const lerp=(a,b,t)=>a+(b-a)*t;
-  const now=()=>performance.now();
-  const rnd=(a,b)=>Math.random()*(b-a)+a;
-  function gridToWorld(gx,gy){return {x:gx*GRID+GRID/2,y:gy*GRID+GRID/2}}
-  function worldToGrid(x,y){return {gx:Math.floor(x/GRID),gy:Math.floor(y/GRID)}}
+// Utility
+const rand = (a,b)=>a + Math.random()*(b-a);
+const randi = (a,b)=>Math.floor(rand(a,b+1));
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const choose=(arr)=>arr[Math.floor(Math.random()*arr.length)];
+const uid = ()=>Math.random().toString(36).slice(2,10);
 
-  // --- Audio (tiny synth beeps) ---
-  const Audio={
-    ctx:null,
-    init(){ if(this.ctx) return; try{ this.ctx=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ this.ctx=null; } },
-    beep(freq=440,dur=0.12,vol=0.08){ if(!this.ctx) return; const t=this.ctx.currentTime; const o=this.ctx.createOscillator(); const g=this.ctx.createGain(); o.type='sine'; o.frequency.setValueAtTime(freq,t); g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(0.0001,t+dur); o.connect(g).connect(this.ctx.destination); o.start(t); o.stop(t+dur); }
+// Global session
+let SESSION = {
+  seed: Math.floor(Math.random()*1e9),
+  rngState: null,
+  levelIndex: 0,
+  score: 0,
+  bestLocal: 0,
+  running: false,
+  paused: false,
+  moves: 0,
+  startTime: 0,
+  curTimer: 0,
+  curPuzzle: null,
+  palette: null,
+  audioEnabled: false,
+  eventsEnabled: true
+};
+
+// Simple deterministic RNG for reproducibility per-seed
+function makeRNG(seed){
+  let s = seed >>> 0;
+  return function(){
+    s = Math.imul(1664525, s) + 1013904223 | 0;
+    return ((s >>> 0) / 4294967296);
   };
+}
 
-  // --- Game State ---
-  const Store={ level:1, score:0, lives:3, bestChain:0, mode:'story' };
-  try{ const s=JSON.parse(localStorage.getItem('ccc-save')||'{}'); Object.assign(Store,s); }catch{}
-  function persist(){ localStorage.setItem('ccc-save',JSON.stringify(Store)); }
+// Palettes
+const PALETTES = [
+  {name:'Aqua Neon', colors:['#00f2ff','#6df7c1','#4ec3ff','#0ff']},
+  {name:'Vivid Magenta', colors:['#ff4ecd','#ffb86b','#caa7ff','#ff7ab6']},
+  {name:'Solar Glow', colors:['#ffd86b','#ff7a59','#ffdf8a','#ffd58a']},
+  {name:'Electric Sky', colors:['#7ee7ff','#6df7c1','#9ad0ff','#c6b3ff']}
+];
 
-  // --- Node Types ---
-  const TYPES={
-    START:{name:'Start',color:'#00f2ff'},
-    GOAL:{name:'Goal',color:'#86ff6a'},
-    FIRE:{name:'Fire',color:'#ff7a59'},
-    ICE:{name:'Ice',color:'#7fd0ff'},
-    WATER:{name:'Water',color:'#4ec3ff'},
-    WIND:{name:'Wind',color:'#9be7ff'},
-    PLANT:{name:'Plant',color:'#6df7c1'},
-    POWER:{name:'Power',color:'#ffe66d'},
-    GATE:{name:'Gate',color:'#e0ff8b'},
-    DELAY:{name:'Delay',color:'#b4a5ff'},
-    SPLIT:{name:'Splitter',color:'#f9a8d4'},
-    AND:{name:'Logic AND',color:'#d1d5db'},
-    OR:{name:'Logic OR',color:'#cbd5e1'}
-  };
-  const PALETTE=['START','FIRE','ICE','WATER','WIND','PLANT','POWER','GATE','DELAY','SPLIT','AND','OR','GOAL'];
+// Canvas & rendering
+const canvas = document.getElementById('mainCanvas');
+const ctx = canvas.getContext('2d');
+let CANVAS_W = canvas.width, CANVAS_H = canvas.height;
+function resizeCanvas(){
+  CANVAS_W = canvas.width = canvas.clientWidth * devicePixelRatio;
+  CANVAS_H = canvas.height = canvas.clientHeight * devicePixelRatio;
+  ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
+}
+resizeCanvas();
+window.addEventListener('resize', ()=>{ resizeCanvas(); });
 
-  // --- Rule Engine (what triggers what) ---
-  function nodeReact(node,ev,emit){
-    switch(node.type){
-      case 'START':
-        if(ev.kind==='start') emit(node,'signal',0);
-        break;
-      case 'FIRE':
-        if(ev.kind==='signal'||ev.kind==='push'){ emit(node,'heat',0); spark(node); }
-        break;
-      case 'ICE':
-        if(ev.kind==='heat'){ emit(node,'wet',0.15); fog(node); }
-        break;
-      case 'WATER':
-        if(ev.kind==='wet'||ev.kind==='signal'){ emit(node,'wet',0); ripple(node); }
-        break;
-      case 'WIND':
-        if(ev.kind==='signal'){ emit(node,'push',0); gust(node); }
-        break;
-      case 'PLANT':
-        if(ev.kind==='wet'){ emit(node,'signal',0.1); bloom(node); }
-        break;
-      case 'POWER':
-        if(ev.kind==='signal'||ev.kind==='wet'){ emit(node,'power',0); pulse(node); }
-        break;
-      case 'GATE':
-        if(ev.kind==='power'){ emit(node,'signal',0); shine(node); }
-        break;
-      case 'DELAY':
-        if(ev.kind){ emit(node,ev.kind, node.delay||0.6); ping(node); }
-        break;
-      case 'SPLIT':
-        if(ev.kind){ emit(node,ev.kind,0); emit(node,ev.kind,0.2); splitfx(node); }
-        break;
-      case 'AND':
-        node._andHits=node._andHits||new Set();
-        node._andHits.add(ev.kind);
-        if(node._andHits.has('heat') && node._andHits.has('wet')){ emit(node,'signal',0); node._andHits.clear(); gatePulse(node); }
-        break;
-      case 'OR':
-        if(ev.kind==='heat'||ev.kind==='wet'||ev.kind==='power'||ev.kind==='push'||ev.kind==='signal'){ emit(node,'signal',0); gatePulse(node); }
-        break;
-      case 'GOAL':
-        if(ev.kind==='signal'||ev.kind==='power'){ goalGlow(node); node._goalReached=true; }
-        break;
-    }
+// Particle system
+const particles = [];
+function spawnParticle(x,y,color,size=4,life=700,vx=0,vy=0){
+  particles.push({x,y,vx,vy,color,size,life,age:0});
+}
+function updateParticles(dt){
+  for(let i=particles.length-1;i>=0;i--){
+    const p=particles[i]; p.age+=dt;
+    if(p.age>p.life){particles.splice(i,1); continue;}
+    p.x += p.vx*dt/1000;
+    p.y += p.vy*dt/1000;
   }
-
-  // --- Particles (simple pooled system) ---
-  const particles=[];
-  function addParticle(x,y,clr,life=600,size=2,vx=rnd(-60,60),vy=rnd(-60,60)){
-    particles.push({x,y,vx,vy,life,max:life,clr,size});
+}
+function drawParticles(){
+  for(const p of particles){
+    const t = 1 - (p.age/p.life);
+    ctx.globalAlpha = t;
+    ctx.fillStyle = p.color;
+    ctx.beginPath(); ctx.arc(p.x,p.y,p.size*t,0,Math.PI*2); ctx.fill();
+    ctx.globalAlpha=1;
   }
-  function spark(n){ for(let i=0;i<18;i++) addParticle(n.x,n.y,'#ffb199',300,2); Audio.beep(660,0.08,0.05); }
-  function fog(n){ for(let i=0;i<12;i++) addParticle(n.x,n.y,'#a6d8ff',500,3,rnd(-20,20),rnd(-10,10)); Audio.beep(220,0.12,0.04); }
-  function ripple(n){ for(let i=0;i<14;i++) addParticle(n.x,n.y,'#7fdbff',450,2); Audio.beep(440,0.09,0.04); }
-  function gust(n){ for(let i=0;i<10;i++) addParticle(n.x,n.y,'#b3ecff',350,2,rnd(40,120),rnd(-40,40)); Audio.beep(520,0.07,0.04); }
-  function bloom(n){ for(let i=0;i<10;i++) addParticle(n.x,n.y,'#8cffc1',550,3); Audio.beep(520,0.1,0.05); }
-  function pulse(n){ for(let i=0;i<10;i++) addParticle(n.x,n.y,'#ffe66d',380,2); Audio.beep(700,0.07,0.05); }
-  function shine(n){ for(let i=0;i<12;i++) addParticle(n.x,n.y,'#e0ff8b',420,2); Audio.beep(880,0.07,0.05); }
-  function splitfx(n){ for(let i=0;i<10;i++) addParticle(n.x,n.y,'#f9a8d4',380,2); }
-  function gatePulse(n){ for(let i=0;i<8;i++) addParticle(n.x,n.y,'#d1d5db',380,2); }
-  function goalGlow(n){ for(let i=0;i<40;i++) addParticle(n.x,n.y,'#86ff6a',800,3); Audio.beep(1040,0.2,0.08); }
+}
 
-  // --- Level Data ---
-  const LEVELS=[
-    { name:'Forest Ruins', time:35, layout:[
-      {t:'START',x:2,y:4},{t:'FIRE',x:4,y:4},{t:'ICE',x:6,y:4},{t:'WATER',x:8,y:4},{t:'PLANT',x:10,y:4},{t:'GOAL',x:13,y:4}
-    ]},
-    { name:'Windworks', time:40, layout:[
-      {t:'START',x:1,y:7},{t:'WIND',x:3,y:7},{t:'FIRE',x:5,y:6},{t:'ICE',x:7,y:6},{t:'DELAY',x:7,y:8},{t:'WATER',x:9,y:7},{t:'PLANT',x:11,y:7},{t:'GOAL',x:14,y:7}
-    ]},
-    { name:'Logic Lab', time:45, layout:[
-      {t:'START',x:2,y:2},{t:'FIRE',x:5,y:2},{t:'WATER',x:5,y:6},{t:'AND',x:7,y:4},{t:'POWER',x:9,y:4},{t:'GATE',x:11,y:4},{t:'GOAL',x:13,y:4}
-    ]},
-    { name:'Time Rift', time:55, layout:[
-      {t:'START',x:1,y:4},{t:'SPLIT',x:3,y:4},
-      {t:'FIRE',x:5,y:2},{t:'ICE',x:7,y:2},{t:'WATER',x:9,y:2},{t:'PLANT',x:11,y:2},
-      {t:'WIND',x:5,y:6},{t:'FIRE',x:7,y:6},{t:'DELAY',x:9,y:6},{t:'POWER',x:11,y:6},
-      {t:'OR',x:13,y:4},{t:'GATE',x:15,y:4},{t:'GOAL',x:16,y:4}
-    ]}
-  ];
-
-  // --- Node & Graph ---
-  class Node{
-    constructor(type,gx,gy){
-      this.type=type; this.gx=gx; this.gy=gy;
-      const p=gridToWorld(gx,gy); this.x=p.x; this.y=p.y;
-      this.delay=0.6; this.links=new Set();
-      // safer id: use crypto.randomUUID if available, else fallback
-      this.id = (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') ? crypto.randomUUID() : Math.random().toString(36).slice(2);
-    }
+/* -------------------------
+   Sound: small synth (WebAudio)
+--------------------------*/
+let AUDIO = {ctx:null, master:null};
+function initAudio(){
+  if(AUDIO.ctx) return;
+  try{
+    AUDIO.ctx = new (window.AudioContext || window.webkitAudioContext)();
+    AUDIO.master = AUDIO.ctx.createGain();
+    AUDIO.master.gain.value = 0.12;
+    AUDIO.master.connect(AUDIO.ctx.destination);
+  }catch(e){
+    AUDIO.ctx = null;
   }
-  class Graph{
-    constructor(){ this.nodes=[]; this.nodeMap=new Map(); }
-    add(type,gx,gy){ const n=new Node(type,gx,gy); this.nodes.push(n); this.nodeMap.set(n.id,n); return n; }
-    remove(n){ this.nodes=this.nodes.filter(x=>x!==n); this.nodes.forEach(m=>m.links.delete(n.id)); this.nodeMap.delete(n.id); }
-    link(a,b){ if(a&&b&&a!==b){ a.links.add(b.id); }}
-    serialize(){ return this.nodes.map(n=>({id:n.id,t:n.type,gx:n.gx,gy:n.gy,links:[...n.links]})); }
-    static deserialize(data){ const g=new Graph(); const map=new Map(); data.forEach(d=>{ const n=g.add(d.t,d.gx,d.gy); n.id=d.id; map.set(d.id,n); }); g.nodes.forEach(n=>g.nodeMap.set(n.id,n)); data.forEach(d=>{ const n=map.get(d.id); d.links.forEach(id=>{ if(map.has(id)) n.links.add(id); }); }); return g; }
+}
+function beep(freq, dur=0.08, type='sine'){
+  if(!AUDIO.ctx) return;
+  const o = AUDIO.ctx.createOscillator();
+  const g = AUDIO.ctx.createGain();
+  o.type = type;
+  o.frequency.value = freq;
+  g.gain.setValueAtTime(1, AUDIO.ctx.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001, AUDIO.ctx.currentTime + dur);
+  o.connect(g); g.connect(AUDIO.master);
+  o.start(); o.stop(AUDIO.ctx.currentTime + dur);
+}
+
+/* -------------------------
+   Puzzle types & generator
+--------------------------*/
+const PUZZLE_TYPES = ['ColorSequence','TilePattern','CircuitFlow'];
+
+// ColorSequence:
+//  - grid of colored tiles (nxn). Sequence of lights of length L shown, player repeats by clicking tiles in order.
+function generateColorSequence(rng, difficulty){
+  const n = clamp(2 + Math.floor(difficulty/2), 2, 5);
+  const grid = [];
+  for(let y=0;y<n;y++){ const row=[]; for(let x=0;x<n;x++) row.push({colorIndex: randi(0,SESSION.palette.colors.length-1)}); grid.push(row); }
+  const seqLen = clamp(3 + Math.floor(difficulty/2), 3, 8);
+  const seq = [];
+  for(let i=0;i<seqLen;i++){ seq.push({x: randi(0,n-1), y: randi(0,n-1) }); }
+  return {type:'ColorSequence', n, grid, seq, playerSeq: [], revealed:false};
+}
+
+// TilePattern:
+//  - nxn toggle grid. Clicking toggles neighbors (like Lights Out). Generate solvable pattern by applying random toggles starting from empty.
+function generateTilePattern(rng, difficulty){
+  const n = 3 + (difficulty>2?1:0); // 3 or 4
+  // start with all off, apply K random toggles to produce target
+  const toggles = [];
+  const target = Array.from({length:n}, ()=>Array(n).fill(0));
+  const K = 3 + difficulty;
+  for(let k=0;k<K;k++){
+    const x = randi(0,n-1), y = randi(0,n-1);
+    toggles.push({x,y});
+    applyToggle(target,x,y);
   }
-
-  // --- Simulation ---
-  class Simulator{
-    constructor(graph){ this.g=graph; this.events=[]; this.time=0; this.running=false; this.chain=0; this.goalReached=false; }
-    schedule(node,kind,delay){ this.events.push({t:this.time+delay,node,kind}); }
-    start(){ this.events.length=0; this.time=0; this.running=true; this.chain=0; this.goalReached=false;
-      for(const n of this.g.nodes) if(n.type==='START') this.schedule(n,'start',0);
-    }
-    step(dt){ if(!this.running) return; this.time+=dt; let progressed=false; for(let i=0;i<this.events.length;i++){
-        const e=this.events[i]; if(e.t<=this.time){
-          progressed=true; this.events.splice(i,1); i--;
-          for(const id of e.node.links){ const target=this.g.nodeMap.get(id); if(!target) continue; this.chain++; nodeReact(target,{kind:e.kind},(emitter,kind,delay)=>{
-            this.schedule(target,kind,delay);
-          }); if(target.type==='GOAL' && (e.kind==='signal'||e.kind==='power')){ this.goalReached=true; }
-          }
-        }
-      }
-      return progressed;
-    }
+  // The puzzle: given initial target, player must reach all-zero (or all-on depending design). We'll ask player to match target pattern (light all target cells)
+  return {type:'TilePattern', n, target, player: Array.from({length:n}, ()=>Array(n).fill(0)), movesLeft: 10 + difficulty*2};
+}
+function applyToggle(matrix,x,y){
+  const n = matrix.length;
+  const dx = [0,1,-1,0,0], dy = [0,0,0,1,-1];
+  for(let i=0;i<dx.length;i++){
+    const nx = x+dx[i], ny=y+dy[i];
+    if(nx>=0 && nx<n && ny>=0 && ny<n) matrix[ny][nx] = 1 - matrix[ny][nx];
   }
+}
 
-  // --- Editor / Game Controller ---
-  const State={ graph:new Graph(), selectedType:'START', selectedNode:null, dragging:false, linkFrom:null, timeLeft:30, sim:null, running:false, levelIndex:0 };
-
-  function loadLevel(i){
-    const L=LEVELS[i]; State.levelIndex=i; State.graph=new Graph(); L.layout.forEach(d=>State.graph.add(d.t,d.x,d.y));
-    const rowMap={};
-    State.graph.nodes.forEach(n=>{ rowMap[n.gy]=rowMap[n.gy]||[]; rowMap[n.gy].push(n); });
-    Object.values(rowMap).forEach(arr=>{ arr.sort((a,b)=>a.gx-b.gx); for(let k=0;k<arr.length-1;k++){ State.graph.link(arr[k],arr[k+1]); } });
-    State.timeLeft=L.time; State.running=false; State.sim=new Simulator(State.graph);
-    updateHud(); setStatus(`Loaded level ${i+1}: ${L.name}`);
+// CircuitFlow:
+//  - small node graph: inputs, gates, outputs. Player must connect wires by clicking pairs of nodes. For complexity, we'll present a preconnected graph with missing wires.
+function generateCircuitFlow(rng, difficulty){
+  // simple: inputs (1-2), one gate (AND/OR/NOT) optionally, one output. Represent nodes with positions.
+  const inputs = 1 + Math.floor(difficulty/2);
+  const gates = Math.min(1 + Math.floor(difficulty/2), 3);
+  const nodes = [];
+  // layout nodes on left (inputs), middle (gates), right (output)
+  for(let i=0;i<inputs;i++) nodes.push({id: 'in'+i, type:'IN', x:100, y:120 + i*90});
+  for(let g=0; g<gates; g++){
+    const kind = choose(['AND','OR','XOR','NOT']);
+    nodes.push({id:'g'+g, type:kind, x:350, y:100 + g*100});
   }
-
-  function updateHud(){ levelInfo.textContent=`Level ${State.levelIndex+1}/${LEVELS.length} • Score ${Store.score} • Lives ${Store.lives} • Best Chain ${Store.bestChain}`; }
-  function setStatus(t){ statusEl.textContent=t; }
-
-  // --- Drawing ---
-  function drawGrid(){ ctx.strokeStyle='#1a2746'; ctx.lineWidth=1; for(let x=0;x<=W;x+=GRID){ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); } for(let y=0;y<=H;y+=GRID){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); } }
-  function drawLink(a,b,glow=false){ const g=ctx.createLinearGradient(a.x,a.y,b.x,b.y); g.addColorStop(0,'#00f2ff'); g.addColorStop(1,'#6df7c1'); ctx.strokeStyle=g; ctx.lineWidth= glow?4:2; ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke(); }
-  function drawNode(n,highlight=false){ const col=TYPES[n.type].color; ctx.save(); ctx.translate(n.x,n.y); if(highlight) ctx.shadowColor=col,ctx.shadowBlur=18; ctx.fillStyle=col; ctx.beginPath(); ctx.arc(0,0,20,0,Math.PI*2); ctx.fill(); ctx.fillStyle='#0b0f1a'; ctx.font='700 11px ui-monospace,monospace'; ctx.textAlign='center'; ctx.fillText(n.type,0,4); ctx.restore(); }
-  function drawParticles(dt){ for(let i=particles.length-1;i>=0;i--){ const p=particles[i]; p.life-=dt*1000; if(p.life<=0){ particles.splice(i,1); continue; } p.x+=p.vx*dt; p.y+=p.vy*dt; ctx.globalAlpha=p.life/p.max; ctx.fillStyle=p.clr; ctx.fillRect(p.x,p.y,p.size,p.size); ctx.globalAlpha=1; } }
-
-  // --- Input ---
-  let mouse={x:0,y:0,down:false,rx:0,ry:0};
-  canvas.addEventListener('mousemove',e=>{ const r=canvas.getBoundingClientRect(); mouse.x=(e.clientX-r.left)*canvas.width/r.width; mouse.y=(e.clientY-r.top)*canvas.height/r.height; });
-  canvas.addEventListener('mousedown',e=>{ Audio.init(); mouse.down=true; if(e.button===2){ const n=pickNode(mouse.x,mouse.y); if(n){ State.graph.remove(n); setStatus('Deleted node'); } return; }
-    const n=pickNode(mouse.x,mouse.y); if(n){ State.selectedNode=n; State.dragging=true; setStatus(`Selected ${n.type}`); if(e.shiftKey){ State.linkFrom=n; }
-    }else{ const {gx,gy}=worldToGrid(mouse.x,mouse.y); const type=State.selectedType; const m=State.graph.add(type,gx,gy); State.selectedNode=m; State.dragging=true; setStatus(`Placed ${type}`); }
-  });
-  canvas.addEventListener('mouseup',e=>{ mouse.down=false; State.dragging=false; if(State.linkFrom){ const t=pickNode(mouse.x,mouse.y); if(t && t!==State.linkFrom){ State.graph.link(State.linkFrom,t); setStatus(`Linked ${State.linkFrom.type} → ${t.type}`); } State.linkFrom=null; }
-  });
-  canvas.addEventListener('contextmenu',e=>e.preventDefault());
-
-  function pickNode(x,y){ for(const n of State.graph.nodes){ if((x-n.x)**2+(y-n.y)**2<22*22) return n; } return null; }
-
-  // --- Palette UI ---
-  const pal=document.getElementById('palette');
-  PALETTE.forEach(key=>{
-    const b=document.createElement('div'); b.className='btn'; b.style.borderColor='#2b3f63'; b.style.background='#0f1b33'; b.textContent=TYPES[key].name; b.style.boxShadow=`0 0 0 3px rgba(0,0,0,0) inset`; b.addEventListener('click',()=>{ State.selectedType=key; [...pal.children].forEach(c=>c.style.boxShadow='none'); b.style.boxShadow='0 0 0 2px rgba(0,242,255,.35) inset'; setStatus(`Selected tool: ${key}`); }); pal.appendChild(b); if(key==='START') b.click();
-  });
-
-  // --- Buttons ---
-  document.getElementById('btnPlay').onclick=()=>{ if(State.running) return; State.sim=new Simulator(State.graph); State.sim.start(); State.running=true; setStatus('Running…'); };
-  document.getElementById('btnReset').onclick=()=>{ State.running=false; State.sim=new Simulator(State.graph); timelineFill.style.width='0%'; setStatus('Reset'); };
-  document.getElementById('btnSandbox').onclick=()=>{ Store.mode='sandbox'; persist(); setStatus('Sandbox mode — build freely'); };
-  document.getElementById('btnStory').onclick=()=>{ Store.mode='story'; persist(); loadLevel(State.levelIndex); };
-
-  // --- Game Loop ---
-  let last=now();
-  function tick(){ const t=now(); const dt=(t-last)/1000; last=t; ctx.clearRect(0,0,W,H); drawGrid();
-    // dragging
-    if(State.dragging && State.selectedNode){ const {gx,gy}=worldToGrid(mouse.x,mouse.y); State.selectedNode.gx=clamp(gx,0,Math.floor(W/GRID)-1); State.selectedNode.gy=clamp(gy,0,Math.floor(H/GRID)-1); const p=gridToWorld(State.selectedNode.gx,State.selectedNode.gy); State.selectedNode.x=p.x; State.selectedNode.y=p.y; }
-    // links
-    for(const a of State.graph.nodes){ for(const id of a.links){ const b=State.graph.nodeMap.get(id); if(b) drawLink(a,b,State.running); } }
-    // nodes
-    for(const n of State.graph.nodes){ drawNode(n, State.running && (n.type==='START' || n.type==='GOAL')); }
-    // particles
-    drawParticles(dt);
-
-    // simulation
-    if(State.running){ const progressed=State.sim.step(dt); const dur=LEVELS[State.levelIndex]?.time||40; timelineFill.style.width=clamp((State.sim.time/dur)*100,0,100)+"%"; if(progressed) Store.score+=1;
-      if(State.sim.goalReached){ Store.score+=250; Store.bestChain=Math.max(Store.bestChain,State.sim.chain); State.running=false; setStatus('Goal reached! Level complete.'); nextLevel(); persist(); }
-      if(State.sim.time> (LEVELS[State.levelIndex]?.time||40)){
-        State.running=false; Store.lives--; setStatus('Time up!'); if(Store.lives<0){ gameOver(); } persist();
-      }
-    }
-
-    requestAnimationFrame(tick);
+  nodes.push({id:'out0', type:'OUT', x:700, y:160});
+  // wires: create desired links from all inputs to gates and gates to out, then remove some to create puzzle
+  let links = [];
+  // connect all inputs to gate0, gate i to gate i+1, last gate to out
+  if(gates===0){
+    // connect inputs directly to out (if multiple, require OR logic simulated)
+    inputsLoop: for(let i=0;i<inputs;i++) links.push({from:'in'+i, to:'out0'});
+  } else {
+    for(let i=0;i<inputs;i++) links.push({from:'in'+i, to:'g0'});
+    for(let j=0;j<gates-1;j++) links.push({from:'g'+j, to:'g'+(j+1)});
+    links.push({from:'g'+(gates-1), to:'out0'});
   }
+  // now remove a set of links to create missing connections puzzle
+  const missingCount = clamp(1 + Math.floor(difficulty/2),1,links.length-1);
+  const removed = [];
+  for(let k=0;k<missingCount;k++){
+    const idx = randi(0,links.length-1);
+    removed.push(links[idx]);
+    links.splice(idx,1);
+  }
+  return {type:'CircuitFlow', nodes, links, missing: removed, placed: []};
+}
 
-  function nextLevel(){ if(Store.mode==='sandbox') return; if(State.levelIndex<LEVELS.length-1){ State.levelIndex++; loadLevel(State.levelIndex); } else { setStatus('You completed all story levels! Try Sandbox.'); }
-    updateHud(); }
-  function gameOver(){ setStatus('Game Over — refresh to restart'); }
+/* -------------------------
+  High-level procedural generator
+--------------------------*/
+function generatePuzzle(seed, level){
+  const rng = makeRNG(seed + level*997);
+  const difficulty = Math.min(1 + Math.floor(level/2), 6);
+  const type = choose(PUZZLE_TYPES);
+  if(type==='ColorSequence') return generateColorSequence(rng,difficulty);
+  if(type==='TilePattern') return generateTilePattern(rng,difficulty);
+  if(type==='CircuitFlow') return generateCircuitFlow(rng,difficulty);
+  return generateColorSequence(rng,difficulty);
+}
 
-  // --- Boot ---
-  if(Store.mode==='story'){ loadLevel(State.levelIndex); } else { State.graph=new Graph(); State.sim=new Simulator(State.graph); setStatus('Sandbox mode — build your own!'); }
-  updateHud();
-  tick();
-})();
-</script>
-</body>
-</html>
+/* -------------------------
+   Rendering puzzles
+--------------------------*/
+function clearScreen(){
+  ctx
